@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PreparadosListosYa</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f7f7f7; }
+    header {
+      background: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .logo { font-size: 1.5rem; font-weight: bold; color: #e60023; }
+    .location { font-size: 0.9rem; color: #555; }
+    .profile-btn { cursor: pointer; color: #333; font-weight: bold; }
+    .modal, .comment-modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
+    }
+    .modal-content, .comment-content {
+      background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 500px;
+    }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 0.5rem; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;
+    }
+    .btn { background: #e60023; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; }
+    .btn:hover { background: #c1001e; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 1rem 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .card img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; }
+    .rating-stars span {
+      font-size: 20px;
+      cursor: pointer;
+      color: lightgray;
+    }
+    .rating-stars span.checked { color: gold; }
+    .comment { background: #f0f0f0; margin-top: 0.5rem; padding: 0.5rem; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PreparadosListosYa</div>
+  <div class="location">Enviar a <strong>Buenos Aires</strong></div>
+  <div class="profile-btn" onclick="openModal()">Mi Perfil</div>
+</header>
+
+<!-- Modal para Agregar Tienda -->
+<div class="modal" id="addStoreModal">
+  <div class="modal-content">
+    <h2>Agregar Nueva Tienda</h2>
+    <div class="form-group"><label>Nombre</label><input type="text" id="storeName"></div>
+    <div class="form-group"><label>Descripción</label><textarea id="storeDesc"></textarea></div>
+    <div class="form-group"><label>URL de la Portada</label><input type="text" id="storeImg"></div>
+    <div class="form-group"><label>Menú</label><textarea id="storeMenu"></textarea></div>
+    <div class="form-group"><label>Precios</label><textarea id="storePrices"></textarea></div>
+    <button class="btn" onclick="addStore()">Agregar</button>
+    <button class="btn" style="background:gray;" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal para Comentarios -->
+<div class="comment-modal" id="commentModal">
+  <div class="comment-content">
+    <h3>Agregar Comentario</h3>
+    <div class="rating-stars" id="starRating">
+      <span onclick="setRating(1)">★</span>
+      <span onclick="setRating(2)">★</span>
+      <span onclick="setRating(3)">★</span>
+      <span onclick="setRating(4)">★</span>
+      <span onclick="setRating(5)">★</span>
+    </div>
+    <textarea id="commentText" placeholder="Escribe tu opinión..."></textarea>
+    <button class="btn" onclick="submitComment()">Enviar</button>
+    <button class="btn" style="background:gray;" onclick="closeCommentModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Cards de Tiendas -->
+<div class="cards" id="storeCards">
+  <!-- Tiendas agregadas dinámicamente -->
+</div>
+
+<script>
+  let rating = 0;
+  let currentStore = null;
+
+  function openModal() {
+    document.getElementById("addStoreModal").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("addStoreModal").style.display = "none";
+  }
+
+  function addStore() {
+    const name = document.getElementById("storeName").value;
+    const desc = document.getElementById("storeDesc").value;
+    const img = document.getElementById("storeImg").value;
+    const menu = document.getElementById("storeMenu").value;
+    const prices = document.getElementById("storePrices").value;
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${img}" alt="${name}">
+      <h3>${name}</h3>
+      <p>${desc}</p>
+      <p><strong>Menú:</strong><br>${menu.replace(/\n/g, "<br>")}</p>
+      <p><strong>Precios:</strong><br>${prices.replace(/\n/g, "<br>")}</p>
+      <button class="btn" onclick="openCommentModal(this)">Comentar</button>
+      <div class="comments"></div>
+    `;
+    document.getElementById("storeCards").appendChild(card);
+    closeModal();
+  }
+
+  function openCommentModal(button) {
+    document.getElementById("commentModal").style.display = "flex";
+    currentStore = button.parentElement.querySelector(".comments");
+  }
+
+  function closeCommentModal() {
+    document.getElementById("commentModal").style.display = "none";
+    rating = 0;
+    document.getElementById("commentText").value = "";
+    setRating(0);
+  }
+
+  function setRating(star) {
+    rating = star;
+    const stars = document.querySelectorAll("#starRating span");
+    stars.forEach((s, i) => {
+      s.classList.toggle("checked", i < star);
+    });
+  }
+
+  function submitComment() {
+    const text = document.getElementById("commentText").value;
+    const comment = document.createElement("div");
+    comment.className = "comment";
+    comment.innerHTML = `<strong>${"★".repeat(rating)}${"☆".repeat(5 - rating)}</strong><br>${text}`;
+    currentStore.appendChild(comment);
+    closeCommentModal();
+  }
+</script>
+
+</body>
+</html>
